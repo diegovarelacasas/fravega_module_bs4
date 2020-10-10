@@ -12,7 +12,7 @@ categoryItem_links = [link["href"] for link in categoryItem_list]       # get ev
 
 subcategory_links = []
 
-for category in categoryItem_links:                                      #serch every link on every subcategory item
+for category in categoryItem_links:                                      #serch every link on every category item
     results = requests.get(category)
     src = results.content
     soup = BeautifulSoup(src, "lxml")
