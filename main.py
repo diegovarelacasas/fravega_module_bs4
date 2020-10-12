@@ -18,6 +18,7 @@ class product:
         return "name: " + self.name + "|" + "link: " + self.link
 
 fravega_site = "https://www.fravega.com"
+fravega_category_sublink = "https://www.fravega.com/l/?categorias="
 
 soup = getsoup(fravega_site)
 categoryItem_list = soup.select("[name=CategoryItem] > a")              # Get the category Item Li
@@ -29,15 +30,26 @@ for category in categoryItem_links:                                      #serch 
     soup = getsoup(category)
     subcategory_list = soup.select("div.cajas h3 a")
     for link in subcategory_list:
-        if link["href"] not in subcategory_links:   #remove duplicates
-            subcategory_links.append(fravega_site + link["href"])
-            print(link["href"])
+        if "=" in link["href"]:   #  if the format is "https://www.fravega.com/l/?categorias="
+            href_link = link["href"][link["href"].find("=")+1:]  #use only text after = caracter
+            if href_link.find("/") == -1:  # evaluate if the href_link does´n end in a /
+                subcategory_links.append(fravega_category_sublink + href_link)
+            else:
+                subcategory_links.append(fravega_category_sublink + href_link[:href_link.find("/")])
+        elif link["href"].startswith("/l/"):    # if the subcategory has the format "https://www.fravega.com/l/tv-y-video/tv/"
+            href_link = link["href"][link["href"].find("/l/")+3:]
+            if href_link.find("/") == -1:  # evaluate if the href_link does´n end in a /
+                subcategory_links.append(fravega_category_sublink + href_link)
+            else:
+                subcategory_links.append(fravega_category_sublink + href_link[:href_link.find("/")])
+        elif link["href"] != "":  ## format /seguridad-para-el-hogar/ and not black
+            href_link = link["href"][1:]
+            subcategory_links.append(fravega_category_sublink + href_link[:href_link.find("/")])
+
+
+subcategory_links = list(OrderedDict.fromkeys(subcategory_links))
+
 #print(subcategory_links)
-
-sub2 = subcategory_links[0]
-
-
-#print('\n'.join(map(str, subcategory_links)))
 """
 product_link = []
 
@@ -49,18 +61,40 @@ for subcategory in subcategory_links:
             product_link.append("https://www.fravega.com" + item["href"])
 
 print(product_link)
+print(len(product_link))
 """
 
+product_links = []
+
+for category in subcategory_links:
+    current_page = 1
+    next_page_enable = True
+    while next_page_enable:
+        next_page_enable = False
+        soup = getsoup(category+ "&page="+ str(current_page))
+        itemGrid = soup.select("[name=itemsGrid] > li a")
+        for item in itemGrid:
+            product_links.append(item["href"])
+            print(item["href"])
+        next_page = soup.select("[class=ant-pagination] > li")
+        for button in next_page:
+            if button["title"] == "Next Page" and button["aria-disabled"] == "false":
+                current_page += 1
+                next_page_enable = True
+
+print(len(product_links))
 
 
-#soup = getsoup("https://www.fravega.com/l/?categorias=tv-y-video")
+#print(next_page[8]["title"])
 
-#itemGrid = soup.select("[name=itemsGrid] > li a")
 
 #name = itemGrid[0].find("h4").getText()
 #link = "https://www.fravega.com" + itemGrid[0]["href"]
 
+
+
 #product1 = product(name,link)
+
 
 #print(product1.fulldata())
 
